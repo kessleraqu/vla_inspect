@@ -4,3 +4,4 @@ __pycache__/
 results/
 *.mp4
 *.sqlite
+plots/
