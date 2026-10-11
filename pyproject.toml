@@ -19,6 +19,9 @@ web = [
 plots = [
     "matplotlib>=3.8,<4",
 ]
+dev = [
+    "pytest>=8,<10",
+]
 
 [project.scripts]
 vla-inspect = "vla_inspect.cli:app"

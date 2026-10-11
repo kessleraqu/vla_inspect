@@ -3,7 +3,7 @@ import json
 import pandas as pd
 import streamlit as st
 
-from src.vla_inspect.analyze_rollout import analyze_steps, parse_jsonl
+from vla_inspect.analyze_rollout import analyze_steps, parse_jsonl
 
 
 st.set_page_config(
