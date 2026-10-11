@@ -24,6 +24,7 @@ dev = [
 ]
 
 [project.scripts]
+vlaudit = "vla_inspect.cli:app"
 vla-inspect = "vla_inspect.cli:app"
 
 [tool.setuptools.packages.find]

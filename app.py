@@ -7,12 +7,12 @@ from vla_inspect.analyze_rollout import analyze_steps, parse_jsonl
 
 
 st.set_page_config(
-    page_title="VLA Inspect",
+    page_title="VLAudit",
     page_icon="🤖",
     layout="wide",
 )
 
-st.title("VLA Inspect")
+st.title("VLAudit")
 st.write("Analyze robot-policy rollouts and investigate failures.")
 
 # Let the user choose a rollout file.

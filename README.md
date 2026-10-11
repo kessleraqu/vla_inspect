@@ -1,109 +1,128 @@
 # VLAudit
 
-**Diagnostics for robot-policy evaluation rollouts.**
+**Robot-policy evaluation diagnostics, from rollout logs to actionable inspection.**
 
-VLAudit is an early-stage, open-source tool for inspecting recorded trajectories from vision-language-action (VLA) and other robot-policy evaluations. It turns step-by-step rollout logs into readable metrics, plots, and heuristic warnings that help identify episodes worth investigating.
+[**Launch Web App**](https://vlaudit.streamlit.app/) · [**GitHub Repository**](https://github.com/kessleraqu/vla_inspect)
 
-It provides a **command-line interface (CLI)** for repeatable analysis and a **Streamlit web interface** for interactive inspection. VLAudit analyzes existing evaluations; it does **not** run robot simulations or VLA policies itself.
+VLAudit is an open-source diagnostic tool for inspecting recorded robot-policy evaluations, including vision-language-action (VLA) policy rollouts.
 
-> **Status:** Preparing the first `v0.1.0` release. Interfaces and supported log formats may change during early development.
+It helps researchers and developers understand *what happened during an episode* using trajectory metrics, visualizations, and heuristic warnings.
 
-## What it does
+VLAudit analyzes recorded evaluations. It does **not** run robot simulations, execute VLA models, or determine the root cause of failures automatically.
 
-- Reads per-step **JSONL** episode logs containing robot state and action arrays.
-- Reports trajectory length, displacement, path efficiency, gripper changes, and stall indicators.
-- Flags potentially unusual behavior using heuristic thresholds.
-- Displays position and gripper timelines in Streamlit.
-- Accepts an optional episode video in the web interface.
-- Summarizes multiple episodes from an evaluation-results directory through the CLI.
-- Exports diagnostic information as JSON.
+## Features
 
-**Important:** A warning is a clue, not a diagnosis. Repeated gripper commands do not by themselves prove that the model, controller, or simulation interface is faulty.
+- **Episode analysis:** inspect JSONL robot evaluation recordings.
+- **Trajectory metrics:** path length, displacement, path-to-displacement ratio, and motion statistics.
+- **Gripper analysis:** detect frequent changes in gripper commands.
+- **Heuristic warnings:** flag stalling, excessive switching, and inefficient trajectories.
+- **Evaluation reports:** summarize successes and failures across episode files.
+- **Web interface:** upload an episode and optionally its video.
+- **Command-line interface:** analyze episodes directly or as part of evaluation workflows.
+- **Docker support:** run the CLI without installing project dependencies into your local Python environment.
 
-## Supported input
+## Online Web App
 
-The initial implementation has been exercised with JSONL episode logs from the [VLA Evaluation Harness](https://github.com/allenai/vla-evaluation-harness), including LIBERO/SmolVLA evaluation.
+Use VLAudit without installing anything:
 
-Each nonempty line is a JSON object representing one timestep.
+**https://vlaudit.streamlit.app/**
 
-| Field | Description |
-| --- | --- |
-| `state` | Array containing at least end-effector position `(x, y, z)`. |
-| `action` | Array containing at least seven values: six motion components and a gripper command. |
-| `step` | Timestep identifier, when recorded. |
-| `reward`, `success` | Evaluation outcomes, when recorded. |
+Upload a supported JSONL episode to see diagnostic metrics, warnings, and timelines. An associated video can be uploaded for manual inspection.
 
-Other benchmark formats may require conversion. Metrics are not automatically normalized across robots or benchmarks.
+The current web interface focuses on individual episodes.
 
 ## Installation
 
-Requires **Python 3.11 or newer**.
+Requires Python 3.11 or newer.
 
 ```bash
 git clone https://github.com/kessleraqu/vla_inspect.git
 cd vla_inspect
+
 python3 -m venv .venv
 source .venv/bin/activate
-python -m pip install -e '.[web,plots]'
+
+python -m pip install '.[web,plots]'
 ```
 
-Editable installation means local Python source edits take effect without rebuilding Docker.
+For development, use `python -m pip install -e '.[web,plots,dev]'` instead.
 
-## Command-line usage
+## Command-Line Interface
+
+Analyze one episode:
 
 ```bash
-vlaudit --help
-
 vlaudit analyze /path/to/episode.jsonl
+```
 
+Summarize an evaluation directory:
+
+```bash
 vlaudit report /path/to/results
+```
 
+Export a report:
+
+```bash
 vlaudit report /path/to/results --output report.json
 ```
 
-The older `vla-inspect` command is retained as a backward-compatible alias. Both point to the Typer application in `src/vla_inspect/cli.py`.
+See available commands with `vlaudit --help`.
 
-## Streamlit web interface
-
-Run locally:
-
-```bash
-python -m streamlit run app.py
-```
-
-Open the local address printed by Streamlit, normally `http://localhost:8501`.
-
-Upload an episode JSONL file to inspect metrics, warnings, and timelines. You can optionally upload a video and download diagnostic JSON.
-
-A hosted Streamlit deployment also exists; its public URL will be linked here once confirmed.
+The previous command name, `vla-inspect`, is retained for compatibility.
 
 ## Docker
 
-Build and run the container locally:
+Docker is the recommended option for using the packaged CLI without setting up a Python environment.
+
+Build the image locally:
 
 ```bash
 docker build -t vlaudit:dev .
-docker run --rm -p 8502:8501 vlaudit:dev
 ```
 
-Visit `http://localhost:8502`.
-
-After the first GitHub Release has been successfully published and its Docker package made public:
+Check the CLI:
 
 ```bash
-docker run --rm -p 8502:8501 ghcr.io/kessleraqu/vlaudit:v0.1.0
+docker run --rm vlaudit:dev --help
 ```
 
-Until that release is available, use the local Docker build.
+Analyze local evaluation results:
 
-## Development and tests
+```bash
+docker run --rm \
+  -v "/absolute/path/to/results:/data:ro" \
+  vlaudit:dev report /data
+```
+
+The `-v` option makes the host's results directory accessible inside the container as `/data`. The `:ro` suffix mounts it read-only.
+
+After the first official release is published and its container package is public, the corresponding image will be available as:
+
+`ghcr.io/kessleraqu/vlaudit:v0.1.0`
+
+## Supported Input
+
+The initial version has been tested with JSONL evaluation episodes produced by the [VLA Evaluation Harness](https://github.com/allenai/vla-evaluation-harness), including LIBERO evaluations.
+
+Each nonempty JSONL line represents an episode timestep with fields including:
+
+- `step`: timestep identifier.
+- `state`: robot state array containing at least the end-effector XYZ position.
+- `action`: action array containing at least seven values, including the gripper command.
+
+Other datasets, robot representations, or benchmarks may require conversion.
+
+## Testing
+
+Install development dependencies:
 
 ```bash
 python -m pip install -e '.[web,plots,dev]'
 python -m pytest -v
 ```
 
-If external ROS-related pytest plugins interfere with your local test environment:
+On systems where external ROS pytest plugins interfere with testing:
 
 ```bash
 PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python -m pytest -v
@@ -111,27 +130,16 @@ PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python -m pytest -v
 
 GitHub Actions runs automated tests on pushes and pull requests.
 
-## Project layout
-
-```text
-app.py                                  Streamlit interface
-src/vla_inspect/cli.py                  CLI
-src/vla_inspect/analyze_rollout.py      Episode diagnostics
-src/vla_inspect/evaluation.py           Evaluation summaries
-src/vla_inspect/plot_rollout.py         Plotting helpers
-tests/                                  Automated tests
-Dockerfile                              Container definition
-.github/workflows/                      CI and publishing workflows
-```
-
 ## Limitations
 
-- VLAudit inspects existing logs; it does not run policies or control robots.
-- The web interface currently focuses on one episode at a time.
-- Heuristic thresholds may not generalize across robots, controllers, or benchmarks.
-- A suspicious trajectory does not establish the root cause of failure.
-- Comparisons require compatible tasks, seeds, coordinate conventions, and success criteria.
+VLAudit's diagnostic rules are heuristic. For example, frequent gripper switching suggests a behavior worth inspecting, but does not prove that the policy itself is faulty.
+
+Thresholds and trajectory comparisons may not generalize across robots, control frequencies, coordinate conventions, or benchmarks.
+
+VLAudit currently does not provide validated automatic root-cause analysis or general-purpose video understanding.
 
 ## License
 
-MIT — see [LICENSE](LICENSE). Ensure the license file is present before the release.
+MIT License. See [LICENSE](LICENSE).
+
+Third-party benchmarks, datasets, model weights, and dependencies retain their respective licenses.
