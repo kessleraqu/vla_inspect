@@ -1,7 +1,27 @@
+# Python environment
 .venv/
+
+# Python-generated files
 __pycache__/
 *.pyc
+*.egg-info/
+build/
+dist/
+
+# Generated analysis output
 results/
+reports/
+plots/
 *.mp4
 *.sqlite
-plots/
+*.sqlite3
+
+# Local configuration and secrets
+.env
+.env.*
+!.env.example
+.streamlit/secrets.toml
+
+# Test caches
+.pytest_cache/
+.coverage

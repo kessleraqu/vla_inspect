@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "vla-inspect"
+version = "0.1.0"
+description = "Diagnostics for robot-policy evaluations"
+requires-python = ">=3.11"
+dependencies = [
+    "typer>=0.15,<1",
+]
+
+[project.optional-dependencies]
+web = [
+    "streamlit==1.65.0",
+    "pandas>=2,<4",
+]
+plots = [
+    "matplotlib>=3.8,<4",
+]
+
+[project.scripts]
+vla-inspect = "vla_inspect.cli:app"
+
+[tool.setuptools.packages.find]
+where = ["src"]
